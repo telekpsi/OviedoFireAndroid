@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "514772607400",
+    "firebase_url": "https://oviedofiresd-55a71.firebaseio.com",
+    "project_id": "oviedofiresd-55a71",
+    "storage_bucket": "oviedofiresd-55a71.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:514772607400:android:9b63e0422f0f21b4",
+        "android_client_info": {
+          "package_name": "comtelekpsi.github.oviedofireandroid"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "514772607400-c57jij1b0u4molv0l29ppmad3avetrp0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "comtelekpsi.github.oviedofireandroid",
+            "certificate_hash": "946c73bee92f3dbe7067a3002bb1c4e4c93573d8"
+          }
+        },
+        {
+          "client_id": "514772607400-kn7f284fnu0uejandvr5fi84fmmqo7uq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYowP_ncmlnSYXEj5jctU-dYhwKSUJKQQ"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "514772607400-kn7f284fnu0uejandvr5fi84fmmqo7uq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
