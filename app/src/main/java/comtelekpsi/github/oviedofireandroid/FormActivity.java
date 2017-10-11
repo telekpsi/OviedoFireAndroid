@@ -1,5 +1,6 @@
 package comtelekpsi.github.oviedofireandroid;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -65,11 +66,9 @@ public class FormActivity extends AppCompatActivity {
     private String uid;
     private String username;
     public static final String UID_SAVE = "UIDSaveFile";
-    private Uri uri;
     private URL url;
     Context context;
     ArrayList<Equipment> eList;
-    ImageButton logoutButton;
     Button submitButton;
     String jsonString;
     AsyncTask aTask;
@@ -110,6 +109,7 @@ public class FormActivity extends AppCompatActivity {
         offFormName = getIntent().getStringExtra("OFF_FORM_NAME");
         submitButton = (Button) findViewById(R.id.submit_button);
         mTableLayout=(TableLayout) findViewById(R.id.tableLayout2);
+        //TODO: fix column widths
         //mTableLayout.isStretchAllColumns();
         //mTableLayout.isShrinkAllColumns();
         context = this;
@@ -120,7 +120,7 @@ public class FormActivity extends AppCompatActivity {
         mUsernameTextView.setText(username);
         mCBTextView.setText("Completed by: "+username);
         eList = new ArrayList<>();
-        if (vehicleName!=null) {
+        if (!vehicleName.equals("davidcheck")) {
             mTitleTextView.setText(vehicleName + " " + sectionName);
             aTask= new FormActivity.RetrieveJSON().execute();
         }
@@ -156,98 +156,21 @@ public class FormActivity extends AppCompatActivity {
         });
     }
 
-    public void SubmitSheet(){
-        //add box asking if ready to submit
-        //add check making sure none of the statuses are "incomplete"
-        //loop through each member of eList into a string array
-        //or create a JSON object from the array
-        //send the JSON object using the API call
-        JSONObject jsonObjectOuter = new JSONObject();
-        JSONArray jsonResultsArray = new JSONArray();
-        try {
-            jsonObjectOuter.put("uid", uid);
-            jsonObjectOuter.put("formId", formId);
-
-            for (int i = 0, j = mTableLayout.getChildCount(); i < j; i++) {
-                View view = mTableLayout.getChildAt(i);
-                String captionText;
-                String repairString;
-                JSONObject jsonObjectInner = new JSONObject();
-                if (view instanceof TableRow) {
-                    TableRow row = (TableRow) view;
-                    String rowType = row.getTag().toString();
-                    System.out.println(rowType);
-                    if (!rowType.equals("Text Row")) {
-                        TextView captionTextView = (TextView) row.getChildAt(0);
-                        captionText = captionTextView.getText().toString();
-                        jsonObjectInner.put("caption", captionText);
-                        jsonObjectInner.put("type", rowType);
-                        switch (rowType) {
-                            case "RepairTextRow":
-                                break;
-                            case "pmr":
-                                RadioGroup radioGroup = (RadioGroup) row.getChildAt(1);
-                                String radioState = radioGroup.getTag().toString();
-                                switch (radioState) {
-                                    case "pTag":
-                                        jsonObjectInner.put("status", "Present");
-                                        break;
-                                    case "mTag":
-                                        jsonObjectInner.put("status", "Missing");
-                                        break;
-                                    case "rTag":
-                                        TableRow tRow = (TableRow) mTableLayout.getChildAt(i + 1);
-                                        EditText repairEditText = (EditText) tRow.getChildAt(1);
-                                        repairString = repairEditText.getText().toString();
-                                        jsonObjectInner.put("result", "Needs repair");
-                                        jsonObjectInner.put("note", repairString);
-                                        break;
-                                }
-                                jsonResultsArray.put(jsonObjectInner);
-                                break;
-                            case "per":
-                                TableRow pRow = (TableRow) mTableLayout.getChildAt(i + 1);
-                                TextView perText = (TextView) pRow.getChildAt(1);
-                                jsonObjectInner.put("result", perText.getText().toString());
-                                jsonResultsArray.put(jsonObjectInner);
-                                break;
-                            case "num":
-                                EditText numText = (EditText) row.getChildAt(1);
-                                jsonObjectInner.put("result", numText.getText().toString());
-                                jsonResultsArray.put(jsonObjectInner);
-                                break;
-                            case "pf":
-                                FancySwitch fs = (FancySwitch) row.getChildAt(2);
-                                if (fs.isChecked())
-                                    jsonObjectInner.put("result", "Passed");
-                                else
-                                    jsonObjectInner.put("result", "Failed");
-                                jsonResultsArray.put(jsonObjectInner);
-                                break;
-                            default:
-                                System.out.println("default case");
-                                break;
-                        }
-                    }
-                }
-            }
-            jsonObjectOuter.put("results", jsonResultsArray);
-        }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        System.out.println(jsonObjectOuter);
-        jsonString=jsonObjectOuter.toString();
-        new FormActivity.SendJSON().execute();
-        System.out.println(jsonString);
-    }
+   /* @Override
+    public void onSaveInstanceState(Bundle savedInstanceState){
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.put
+    }*/
 
     class RetrieveJSON extends AsyncTask<Void, Void, String> {
+        private ProgressDialog dialog = new ProgressDialog(FormActivity.this);
         protected void onPreExecute() {
+            this.dialog.setMessage("LOADING");
+            this.dialog.show();
         }
         protected String doInBackground(Void... urls) {
             try {
-                url = new URL("https://us-central1-oviedofiresd-55a71.cloudfunctions.net/form?uid="+uid+"&formId="+formId);
+                url = new URL("https://us-central1-oviedofiresd-55a71.cloudfunctions.net/form/?uid="+uid+"&formId="+formId);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 try {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
@@ -273,11 +196,177 @@ public class FormActivity extends AppCompatActivity {
             if(response == null)
                 response = "THERE WAS AN ERROR";
             Log.i("INFO", response);
-            FormJSONParser.formParse(response, mTableLayout, context);
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+            FormJSONParser.formParse(response, mTitleTextView, mTableLayout, context);
         }
     }
 
+    public void SubmitSheet(){
+        JSONObject jsonObjectOuter = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        try {
+            jsonObjectOuter.put("uid", uid);
+            jsonObjectOuter.put("formId", formId);
+            View tempView=mTableLayout.getChildAt(0);
+            if (tempView instanceof TableRow){
+                TableRow tempRow = (TableRow) tempView;
+                String tempRowType = tempRow.getTag().toString();
+                if (tempRowType.equals("subSection")){
+                    jsonArray=subSectionMethod(jsonObjectOuter, mTableLayout);
+                    if (jsonArray==null)
+                        return;
+                    jsonObjectOuter.put("results", jsonArray);
+                }
+                else {
+                    jsonArray=nonSubSectionMethod(0, mTableLayout.getChildCount(), mTableLayout);
+                    if (jsonArray==null)
+                        return;
+                    jsonObjectOuter.put("results", jsonArray);
+                }
+            }
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+        }
+        System.out.println(jsonObjectOuter);
+        jsonString=jsonObjectOuter.toString();
+        new FormActivity.SendJSON().execute();
+        System.out.println(jsonString);
+    }
+
+    public JSONArray subSectionMethod(JSONObject jsonObjectOuter, TableLayout mTableLayout){
+        JSONArray jsonSectionArray = new JSONArray();
+        for (int i=0, j=mTableLayout.getChildCount(); i<j; i++){
+            String sectionText;
+            View sView = mTableLayout.getChildAt(i);
+            JSONObject jsonObjectMiddle = new JSONObject();
+            if (sView instanceof TableRow) {
+                TableRow sRow = (TableRow) sView;
+                TextView subSectionTextView = (TextView) sRow.getChildAt(0);
+                sectionText = subSectionTextView.getText().toString();
+                int inSectionCount=Integer.parseInt(subSectionTextView.getHint().toString());
+                jsonObjectMiddle = new JSONObject();
+                try {
+                    jsonObjectMiddle.put("title", sectionText);
+                    JSONArray innerArray= nonSubSectionMethod(i+1,inSectionCount,mTableLayout);
+                    if (innerArray == null)
+                        return innerArray;
+                    jsonObjectMiddle.put("results", innerArray);
+                    i+=inSectionCount;
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                jsonSectionArray.put(jsonObjectMiddle);
+            }
+        }
+        return jsonSectionArray;
+    }
+    public JSONArray nonSubSectionMethod(int start, int rowCount, TableLayout mTableLayout){
+        JSONArray jsonResultsArray = new JSONArray();
+        try {
+            for (int i = start, j = rowCount+start; i < j; i++) {
+                View view = mTableLayout.getChildAt(i);
+                String captionText;
+                String repairString;
+                JSONObject jsonObjectInner = new JSONObject();
+                if (view instanceof TableRow) {
+                    TableRow row = (TableRow) view;
+                    String rowType = row.getTag().toString();
+                    System.out.println(rowType);
+                    if (!rowType.equals("Text Row")) {
+                        TextView captionTextView = (TextView) row.getChildAt(0);
+                        captionText = captionTextView.getText().toString();
+                        jsonObjectInner.put("caption", captionText);
+                        jsonObjectInner.put("type", rowType);
+                        switch (rowType) {
+                            case "RepairTextRow":
+                                break;
+                            case "pmr":
+                                RadioGroup radioGroup = (RadioGroup) row.getChildAt(1);
+                                String radioState = radioGroup.getTag().toString();
+                                switch (radioState) {
+                                    case "pTag":
+                                        jsonObjectInner.put("result", "Present");
+                                        break;
+                                    case "mTag":
+                                        jsonObjectInner.put("result", "Missing");
+                                        break;
+                                    case "rTag":
+                                        LinearLayout linearLayout = (LinearLayout) mTableLayout.getChildAt(i + 1);
+                                        EditText repairEditText = (EditText) linearLayout.getChildAt(1);
+                                        repairString = repairEditText.getText().toString();
+                                        if (repairString.isEmpty()){
+                                            Toast.makeText(context, "Please enter details about repairs needed",
+                                                    Toast.LENGTH_LONG).show();
+                                            JSONArray nullArray=null;
+                                            return nullArray;
+                                        }
+                                        jsonObjectInner.put("result", "Needs repair");
+                                        jsonObjectInner.put("note", repairString);
+                                        break;
+                                    default:
+                                        Toast.makeText(context, "Please select an option",
+                                                Toast.LENGTH_LONG).show();
+                                        JSONArray nullArray=null;
+                                        return nullArray;
+                                }
+                                jsonResultsArray.put(jsonObjectInner);
+                                break;
+                            case "per":
+                                TableRow pRow = (TableRow) mTableLayout.getChildAt(i + 1);
+                                TextView perText = (TextView) pRow.getChildAt(1);
+                                if (perText.getText().toString().isEmpty()){
+                                    Toast.makeText(context, "Please select a value",
+                                            Toast.LENGTH_LONG).show();
+                                    JSONArray nullArray=null;
+                                    return nullArray;
+                                }
+                                jsonObjectInner.put("result", perText.getText().toString());
+                                jsonResultsArray.put(jsonObjectInner);
+                                break;
+                            case "num":
+                                EditText numText = (EditText) row.getChildAt(1);
+                                if (numText.getText().toString().isEmpty()){
+                                    Toast.makeText(context, "Please enter a value",
+                                            Toast.LENGTH_LONG).show();
+                                    JSONArray nullArray=null;
+                                    return nullArray;
+                                }
+                                jsonObjectInner.put("result", numText.getText().toString());
+                                jsonResultsArray.put(jsonObjectInner);
+                                break;
+                            case "pf":
+                                FancySwitch fs = (FancySwitch) row.getChildAt(2);
+                                if (fs.isChecked())
+                                    jsonObjectInner.put("result", "Passed");
+                                else
+                                    jsonObjectInner.put("result", "Failed");
+                                jsonResultsArray.put(jsonObjectInner);
+                                break;
+                            default:
+                                System.out.println("default case");
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return jsonResultsArray;
+    }
+
     public class SendJSON extends AsyncTask<String, Void, String> {
+
+        private ProgressDialog dialog = new ProgressDialog(FormActivity.this);
+        protected void onPreExecute() {
+            this.dialog.setMessage("LOADING");
+            this.dialog.show();
+        }
+
         @Override
         protected String doInBackground(String... params) {
             HttpURLConnection conn = null;
@@ -332,6 +421,9 @@ public class FormActivity extends AppCompatActivity {
         }
         @Override
         protected void onPostExecute(String result) {
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
             Toast.makeText(getApplicationContext(), result,
                     Toast.LENGTH_LONG).show();
             Intent intent = new Intent(FormActivity.this, MainMenuActivity.class);

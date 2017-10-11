@@ -1,12 +1,11 @@
 package comtelekpsi.github.oviedofireandroid;
 
+import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,12 +15,9 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.google.firebase.auth.FirebaseAuth;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -45,61 +41,42 @@ public class ActiveVehicleActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_active_truck);
+        setContentView(R.layout.activity_active_vehicle);
         mUserNameTextView=(TextView) findViewById(R.id.usernameTextView);
         mImageButton = (ImageButton) findViewById(R.id.logoutButton);
         SharedPreferences uidSave = getSharedPreferences(UID_SAVE, Context.MODE_PRIVATE);
         uid = uidSave.getString("pUID", null);
+        Log.e("HEREHERE","Active successfully retried uid: "+uid);
         username = uidSave.getString("pUsername", null);
+        Log.e("HEREHERE","Active successfully retried username: "+username);
         mUserNameTextView.setText(username);
         context = this;
         mLinearLayout=(LinearLayout)findViewById(R.id.linearLayout);
         String http="https://us-central1-oviedofiresd-55a71.cloudfunctions.net/activeVehicles/?uid="+uid;
         uri=Uri.parse(http);
-        System.out.println(uri.toString());
+        Log.e("HEREHERE","Active uri: " +uri.toString());
         mTextView=(TextView) findViewById(R.id.textView);
-
-        /*logoutButton = (ImageButton) findViewById(R.id.logoutButton);
-        logoutButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which){
-                            case DialogInterface.BUTTON_POSITIVE:
-                                FirebaseAuth.getInstance().signOut();
-                                Intent intent = new Intent(ActiveVehicleActivity.this, MainActivity.class);
-                                startActivity(intent);
-                                break;
-                            case DialogInterface.BUTTON_NEGATIVE:
-                                //No button clicked
-                                break;
-                        }
-                    }
-                };
-                AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setMessage("Are you sure you want to logout?").setPositiveButton("Yes", dialogClickListener)
-                        .setNegativeButton("No", dialogClickListener).show();
-            }
-        });*/
-
-        new RetrieveJSON().execute();
+        try {
+            new RetrieveJSON().execute();
+        }
+        catch (OutOfMemoryError error){
+            Log.e("HEREHERE", "retrieveerror "+error.getMessage());
+        }
     }
 
     class RetrieveJSON extends AsyncTask<Void, Void, String> {
 
         private Exception exception;
-
+        private ProgressDialog dialog = new ProgressDialog(ActiveVehicleActivity.this);
         protected void onPreExecute() {
+            this.dialog.setMessage("LOADING");
+            this.dialog.show();
         }
-
         protected String doInBackground(Void... urls) {
             // Do some validation here
-
             try {
                 url = new URL("https://us-central1-oviedofiresd-55a71.cloudfunctions.net/activeVehicles/?uid="+uid);
-                //url = new URL("https://us-central1-oviedofiresd-55a71.cloudfunctions.net/activeVehicles?uid=lZQ84X39nXUAmwDGWRy01pYJwj52");
+                Log.e("HEREHERE","Active url being used: "+url.toString());
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 try {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
@@ -109,7 +86,7 @@ public class ActiveVehicleActivity extends AppCompatActivity {
                         stringBuilder.append(line).append("\n");
                     }
                     bufferedReader.close();
-                    System.out.println(stringBuilder.toString());
+                    Log.e("HEREHERE","Active stringbuilder: "+stringBuilder.toString());
                     return stringBuilder.toString();
                 }
                 finally{
@@ -127,20 +104,32 @@ public class ActiveVehicleActivity extends AppCompatActivity {
                 response = "THERE WAS AN ERROR";
             }
             Log.i("INFO", response);
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
             buttons.clear();
-            buttons=ActiveJSONParser.parseparse(response, mLinearLayout, context);
-            for (int i=0; i<buttons.size(); i++){
-                final int j=i;
-                buttons.get(i).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(context, VehicleSubActivity.class);
-                        intent.putExtra("VEHICLE_ID", buttons.get(j).getHint().toString());
-                        intent.putExtra("VEHICLE_NAME", buttons.get(j).getText());
-                        startActivity(intent);
+            try {
+                buttons = ActiveJSONParser.parseparse(response, mLinearLayout, context);
+                for (int i = 0; i < buttons.size(); i++) {
+                    final int j = i;
+                    try {
+                        buttons.get(i).setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Intent intent = new Intent(context, VehicleSubActivity.class);
+                                intent.putExtra("VEHICLE_ID", buttons.get(j).getHint().toString());
+                                intent.putExtra("VEHICLE_NAME", buttons.get(j).getText());
+                                startActivity(intent);
+                            }
+                        });
                     }
-                });
-
+                    catch (OutOfMemoryError error3){
+                        Log.e("HEREHERE", "buttonclickerror " +error3.getMessage());
+                    }
+                }
+            }
+            catch (OutOfMemoryError error2){
+                Log.e("HEREHERE", "buttonparseerror "+error2.getMessage());
             }
             //mTextView.setText(response);
         }

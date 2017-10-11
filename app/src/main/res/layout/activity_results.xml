@@ -8,10 +8,9 @@
     android:scrollbarStyle="outsideInset"
     android:visibility="visible"
     android:fadeScrollbars="false"
-    android:orientation="vertical"
-    tools:context="comtelekpsi.github.oviedofireandroid.FormActivity">
+    tools:context="comtelekpsi.github.oviedofireandroid.ResultsActivity">
     <LinearLayout
-        android:id="@+id/linearLayoutShell"
+        android:id="@+id/linearLayoutResultsShell"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -19,7 +18,7 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp">
         <LinearLayout
-            android:id="@+id/linearLayout"
+            android:id="@+id/linearResultsLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginBottom="8dp"
@@ -31,7 +30,7 @@
             android:showDividers="middle">
 
             <LinearLayout
-                android:id="@+id/topBarLayout"
+                android:id="@+id/topBarResultsLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -39,7 +38,7 @@
                 tools:layout_editor_absoluteY="8dp">
 
                 <TextView
-                    android:id="@+id/usernameTextView"
+                    android:id="@+id/usernameResultsTextView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -48,38 +47,40 @@
                     android:textSize="20sp"
                     tools:layout_editor_absoluteX="8dp"
                     tools:layout_editor_absoluteY="0dp"/>
-
             </LinearLayout>
 
             <TextView
-                android:id="@+id/formTitleTextView"
+                android:id="@+id/formTitleResultsTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
-            <TextView
-                android:id="@+id/completedByTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Completed by: "/>
+            <LinearLayout
+                android:id="@+id/nameDateResultsLayout"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/completedByResultsTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Completed by: "/>
+                <TextView
+                    android:id="@+id/dateCBResultsTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Completed on: "/>
+            </LinearLayout>
 
             <TableLayout
-                android:id="@+id/tableLayout2"
+                android:id="@+id/tableResultsLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:divider="?android:attr/dividerHorizontal"
-                android:showDividers="middle"
+                android:divider="@drawable/rectdivider"
+                android:showDividers="beginning|middle|end"
                 android:shrinkColumns="0"
                 android:stretchColumns="1">
             </TableLayout>
-
         </LinearLayout>
-
-        <Button
-            android:id="@+id/submit_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center"
-            android:text="Submit"/>
     </LinearLayout>
 </ScrollView>

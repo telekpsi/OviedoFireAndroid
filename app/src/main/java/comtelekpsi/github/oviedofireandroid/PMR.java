@@ -1,10 +1,18 @@
 package comtelekpsi.github.oviedofireandroid;
 
 import android.content.Context;
+import android.text.InputFilter;
+import android.text.Selection;
+import android.text.SpanWatcher;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TableLayout;
@@ -18,7 +26,7 @@ import static android.view.View.generateViewId;
  */
 
 public class PMR {
-    String status;
+    String result;
     String caption;
     String repairString;
     EditText repairEditText;
@@ -30,9 +38,10 @@ public class PMR {
     }
     public PMR(final TableLayout tableLayout, final TableRow tableRow, final Context context, String caption){
         this.caption=caption;
-        status="incomplete";
+        result="incomplete";
         repairString=null;
         final RadioGroup radioGroup=new RadioGroup(context);
+        radioGroup.setTag("incomplete");
         radioGroup.setOrientation(RadioGroup.HORIZONTAL);
         tableRow.addView(radioGroup);
 
@@ -55,19 +64,23 @@ public class PMR {
         radioGroup.addView(mRadioButton);
         radioGroup.addView(rRadioButton);
 
-        final TableRow textRow=new TableRow(context);
-        tableLayout.addView(textRow);
-        textRow.setTag("Text Row");
+        final LinearLayout textLayout=new LinearLayout(context);
+        textLayout.setOrientation(LinearLayout.HORIZONTAL);
+        tableLayout.addView(textLayout);
+        textLayout.setTag("Text Row");
 
         final TextView labelText = new TextView(context);
         labelText.setText("");
-        textRow.addView(labelText);
+        textLayout.addView(labelText);
 
         repairEditText = new EditText(context);
         repairEditText.setEnabled(false);
         repairEditText.setText("");
         //repairEditText.setVisibility(View.INVISIBLE);
-        textRow.addView(repairEditText);
+        textLayout.addView(repairEditText);
+
+        final String prefix="Notes: ";
+        //TODO: update submit function to not just look for rows
 
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -78,26 +91,30 @@ public class PMR {
                    repairString=repairEditText.getText().toString();
                 }
                 if (checkedId == pId) {
-                    status="Present";
+                    result="Present";
                     repairEditText.setText("");
                     repairEditText.setEnabled(false);
                     labelText.setText("");
                     radioGroup.setTag("pTag");
                 } else if (checkedId == mId) {
-                    status="Missing";
+                    result="Missing";
                     repairEditText.setText("");
                     repairEditText.setEnabled(false);
                     labelText.setText("");
                     radioGroup.setTag("mTag");
                 } else if (checkedId == rId) {
-                    status="Repairs Needed";
+                    result="Repairs Needed";
                     if (repairString!=null){
                         repairEditText.setText(repairString);
                     }
                     repairEditText.setEnabled(true);
                     repairEditText.requestFocus();
-                    labelText.setText("Notes:");
+                    labelText.setText(prefix);
                     radioGroup.setTag("rTag");
+                }
+                else {
+                    result = "incomplete";
+                    radioGroup.setTag("incomplete");
                 }
             }
         });

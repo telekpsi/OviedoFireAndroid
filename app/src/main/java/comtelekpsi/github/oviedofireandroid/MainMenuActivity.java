@@ -1,18 +1,17 @@
 package comtelekpsi.github.oviedofireandroid;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.RoundRectShape;
+import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,18 +20,18 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
-import static android.R.attr.strokeColor;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 
 public class MainMenuActivity extends AppCompatActivity {
 
+    private String formId;
     private String uid;
     private String username;
     ImageButton logoutButton;
-    Button aButton;
-    Button bButton;
-    Button cButton;
-    Button dButton;
     Context context;
     public static final String UID_SAVE = "UIDSaveFile";
 
@@ -142,19 +141,74 @@ public class MainMenuActivity extends AppCompatActivity {
                 Toast.makeText(this, "Unsuccessful scan", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
-                /*String contents=result.getContents();
-                long formID = Long.parseLong(contents);
-                Intent intent = new Intent(this, FormActivity.class);
-                intent.putExtra("FORM_ID", formID);
-                intent.putExtra("FORM_ID_STRING", contents);
-                intent.putExtra("USER_NAME", username);
-                System.out.println("Intent Integrator Username: "+username);
-                intent.putExtra("USER_ID", uid);
-                startActivity(intent);*/
-
+                formId=result.getContents();
+                new MainMenuActivity.CompletionCheck().execute();
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+    class CompletionCheck extends AsyncTask<Void, Void, String> {
+        private ProgressDialog dialog = new ProgressDialog(context);
+        protected void onPreExecute() {
+            this.dialog.setMessage("LOADING");
+            this.dialog.show();
+        }
+        @Override
+        protected String doInBackground(Void... params) {
+            URL url;
+            try {
+                url = new URL("https://us-central1-oviedofiresd-55a71.cloudfunctions.net/checkCompletion/?uid="+uid+"&formId="+formId);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                try {
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                    StringBuilder stringBuilder = new StringBuilder();
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        stringBuilder.append(line).append("\n");
+                    }
+                    bufferedReader.close();
+                    System.out.println(stringBuilder.toString());
+                    return stringBuilder.toString();
+                } finally {
+                    urlConnection.disconnect();
+                }
+            }
+            catch (Exception e){
+                e.printStackTrace();
+                return null;
+            }
+        }
+        protected void onPostExecute(String response) {
+            System.out.println(response.charAt(1));
+            if(response.charAt(0)=='t'){
+                System.out.println("read as true");
+                Toast.makeText(MainMenuActivity.this, "Form Already Completed: Loading completed form",
+                        Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(context, ResultsActivity.class);
+                intent.putExtra("VEHICLE_NAME", "davidcheck");
+                intent.putExtra("FORM_ID", formId);
+                intent.putExtra("USER_NAME", username);
+                intent.putExtra("USER_ID", uid);
+                startActivity(intent);
+            }
+            else if (response.charAt(0)=='f'){
+                System.out.println("read as false");
+                Toast.makeText(MainMenuActivity.this, "Loading form to complete",
+                        Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(context, FormActivity.class);
+                intent.putExtra("VEHICLE_NAME", "davidcheck");
+                intent.putExtra("FORM_ID", formId);
+                intent.putExtra("USER_NAME", username);
+                intent.putExtra("USER_ID", uid);
+                startActivity(intent);
+            }
+            else{
+                System.out.println("hell if I know");
+            }
+            Log.i("INFO", response);
+            if (dialog.isShowing())
+                dialog.dismiss();
         }
     }
 }

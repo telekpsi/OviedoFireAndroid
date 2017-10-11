@@ -1,5 +1,6 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_layout"
     android:layout_width="match_parent"
@@ -7,13 +8,6 @@
     android:background="@drawable/lush"
     android:orientation="vertical"
     android:weightSum="4">
-
-    <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center_vertical">
-
         <LinearLayout
             android:id="@+id/email_password_fields"
             android:layout_width="fill_parent"
@@ -56,9 +50,18 @@
                 android:text="Login"
 
                 />
+
         </LinearLayout>
 
-    </RelativeLayout>
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/fireLogoImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:src="@drawable/firelogo2"
+        app:civ_border_color="#FF000000"
+        app:civ_border_width="2dp"/>
+
 
 </LinearLayout>
 <!--

@@ -33,7 +33,6 @@ public class ToDoJSONParser {
                 String cb=object2.getString("completeBy");
                 cb = "Complete by: "+cb;
                 textView.setText(cb);
-
                 Button button=new Button(context);
                 buttons.add(button);
                 button.setText(name);

@@ -195,13 +195,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         username=mEmailField.getText().toString().substring(0,mEmailField.getText().toString().indexOf('@'));
                         mainMenu(view);
                     }
-
                 }
             };
-
             Handler h = new Handler();
             h.postDelayed(r, 3100);
-
         }
     }
     public void mainMenu(View view){

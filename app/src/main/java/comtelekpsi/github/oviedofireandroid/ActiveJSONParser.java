@@ -3,6 +3,7 @@ package comtelekpsi.github.oviedofireandroid;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -39,16 +40,9 @@ public class ActiveJSONParser {
                 System.out.println(button.getHint());
                 linearLayout.addView(button);
             }
-
-
-
         } catch (JSONException e) {
-            // Appropriate error handling code
+            Log.e("HEREHERE", "You got a JSON EXCEPTION?");
         }
-
-
-
-
         return buttons;
     }
 

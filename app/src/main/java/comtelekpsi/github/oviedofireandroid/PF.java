@@ -20,10 +20,6 @@ import static android.view.View.generateViewId;
 
 public class PF {
 
-    String status;
-    String caption;
-    RadioButton pRadioButton;
-    RadioButton fRadioButton;
     boolean passed=false;
 
     public PF(){}

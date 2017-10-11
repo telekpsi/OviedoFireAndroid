@@ -1,5 +1,6 @@
 package comtelekpsi.github.oviedofireandroid;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,6 +14,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -24,6 +26,8 @@ public class StretchersActivity extends AppCompatActivity {
 
     private String uid;
     private String username;
+    private String formId;
+    private String offFormName;
     public static final String UID_SAVE = "UIDSaveFile";
     private URL url;
     Context context;
@@ -31,7 +35,6 @@ public class StretchersActivity extends AppCompatActivity {
     LinearLayout mLinearLayout;
     TextView mTextView;
     TableLayout mTableLayout;
-    ImageButton logoutButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,39 +51,16 @@ public class StretchersActivity extends AppCompatActivity {
         uid = uidSave.getString("pUID", null);
         username = uidSave.getString("pUsername", null);
         mUsernameTextView.setText(username);
-        /*logoutButton = (ImageButton) findViewById(R.id.logoutButton);
-        logoutButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which){
-                            case DialogInterface.BUTTON_POSITIVE:
-                                FirebaseAuth.getInstance().signOut();
-                                Intent intent = new Intent(VehicleSubActivity.this, MainActivity.class);
-                                startActivity(intent);
-                                break;
-                            case DialogInterface.BUTTON_NEGATIVE:
-                                //No button clicked
-                                break;
-                        }
-                    }
-                };
-                AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setMessage("Are you sure you want to logout?").setPositiveButton("Yes", dialogClickListener)
-                        .setNegativeButton("No", dialogClickListener).show();
-            }
-        });*/
         new StretchersActivity.RetrieveJSON().execute();
     }
 
     class RetrieveJSON extends AsyncTask<Void, Void, String> {
-        private Exception exception;
+        private ProgressDialog dialog = new ProgressDialog(StretchersActivity.this);
         protected void onPreExecute() {
+            this.dialog.setMessage("LOADING");
+            this.dialog.show();
         }
         protected String doInBackground(Void... urls) {
-            // Do some validation here
             try {
                 url = new URL("https://us-central1-oviedofiresd-55a71.cloudfunctions.net/stretchers/?uid="+uid);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -104,12 +84,14 @@ public class StretchersActivity extends AppCompatActivity {
                 return null;
             }
         }
-
         protected void onPostExecute(String response) {
             if(response == null) {
                 response = "THERE WAS AN ERROR";
             }
             Log.i("INFO", response);
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
             buttons.clear();
             buttons=OffJSONParser.offParse(response, mTableLayout, context);
             for (int i=0; i<buttons.size(); i++){
@@ -117,15 +99,75 @@ public class StretchersActivity extends AppCompatActivity {
                 buttons.get(i).setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Intent intent = new Intent(context, FormActivity.class);
-                        intent.putExtra("FORM_ID", buttons.get(j).getHint().toString());
-                        intent.putExtra("OFF_FORM_NAME", buttons.get(j).getText());
-                        startActivity(intent);
+                        formId=buttons.get(j).getHint().toString();
+                        offFormName=buttons.get(j).getText().toString();
+                        new StretchersActivity.CompletionCheck().execute();
                     }
                 });
-
             }
-            //mTextView.setText(response);
+        }
+    }
+    class CompletionCheck extends AsyncTask <Void, Void, String>{
+        private ProgressDialog dialog = new ProgressDialog(context);
+        protected void onPreExecute() {
+            this.dialog.setMessage("LOADING");
+            this.dialog.show();
+        }
+        @Override
+        protected String doInBackground(Void... params) {
+            URL url;
+            try {
+                url = new URL("https://us-central1-oviedofiresd-55a71.cloudfunctions.net/checkCompletion/?uid="+uid+"&formId="+formId);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                try {
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                    StringBuilder stringBuilder = new StringBuilder();
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        stringBuilder.append(line).append("\n");
+                    }
+                    bufferedReader.close();
+                    System.out.println(stringBuilder.toString());
+                    return stringBuilder.toString();
+                } finally {
+                    urlConnection.disconnect();
+                }
+            }
+            catch (Exception e){
+                e.printStackTrace();
+                return null;
+            }
+        }
+        protected void onPostExecute(String response) {
+            System.out.println(response.charAt(1));
+            if(response.charAt(0)=='t'){
+                System.out.println("read as true");
+                Toast.makeText(StretchersActivity.this, "Form Already Completed: Loading completed form",
+                        Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(context, ResultsActivity.class);
+                intent.putExtra("VEHICLE_NAME", "davidcheck");
+                intent.putExtra("FORM_ID", formId);
+                intent.putExtra("OFF_FORM_NAME", offFormName);
+                startActivity(intent);
+            }
+            else if (response.charAt(0)=='f'){
+                System.out.println("read as false");
+                Toast.makeText(StretchersActivity.this, "Loading form to complete",
+                        Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(context, FormActivity.class);
+                intent.putExtra("VEHICLE_NAME", "davidcheck");
+                intent.putExtra("FORM_ID", formId);
+                intent.putExtra("OFF_FORM_NAME", offFormName);
+                startActivity(intent);
+            }
+            else{
+                System.out.println("hell if I know");
+                Toast.makeText(StretchersActivity.this, "Form already opened by someone else",
+                        Toast.LENGTH_SHORT).show();
+            }
+            Log.i("INFO", response);
+            if (dialog.isShowing())
+                dialog.dismiss();
         }
     }
 }
